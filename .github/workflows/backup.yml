@@ -1,0 +1,18 @@
+# Sauvegarde chiffrée quotidienne (optionnelle). Secrets à créer dans GitHub : DATABASE_URL, BACKUP_KEY.
+# Le fichier chiffré est conservé 30 jours comme artefact du dépôt (privé). Les fichiers Netlify Blobs ne sont PAS inclus.
+name: backup
+on:
+  schedule: [{cron: '30 2 * * *'}]
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm ci --omit=dev
+      - run: node scripts/backup.js kayligey.kbk
+        env: {DATABASE_URL: '${{ secrets.DATABASE_URL }}', BACKUP_KEY: '${{ secrets.BACKUP_KEY }}'}
+      - uses: actions/upload-artifact@v4
+        with: {name: kayligey-backup, path: kayligey.kbk, retention-days: 30}
